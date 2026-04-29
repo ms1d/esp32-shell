@@ -1,0 +1,5 @@
+"-specs=/home/mahad/Projects/esp32-shell/build/bootloader/specs/picolibc.specs"
+-mlongcalls
+-fno-builtin-memcpy
+-fno-builtin-memset
+-fno-builtin-bzero
