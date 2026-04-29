@@ -1,2 +1,0 @@
-source /home/mahad/Projects/esp32-shell/build/bootloader/gdbinit/symbols
-source /home/mahad/Projects/esp32-shell/build/bootloader/gdbinit/connect
