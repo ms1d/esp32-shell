@@ -13,3 +13,4 @@ CMakeUserPresets.json
 compile-commands.json
 build/
 .clangd
+/tools
