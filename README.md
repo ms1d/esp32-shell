@@ -12,4 +12,4 @@ A small mock up shell for the esp32 s3 microcontroller, using esp-idf
 
 - Clone repo (`git clone https://github.com/ms1d/esp32-shell.git`)
 
-- `mkdir components && cd components && git clone https://github.com/olikraus/u8g2.git` to clone dependency (sh1106 library)
+- `git submodule addhttps://github.com/olikraus/u8g2.git` to add u8g2 (under components)
