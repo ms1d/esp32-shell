@@ -1,5 +1,4 @@
 #include "freertos/idf_additions.h"
-#include <stdio.h>
 #include "oled_setup.h"
 #include "keypad.h"
 
@@ -7,18 +6,33 @@
 #define LINE_HEIGHT 8
 #define LINE_WIDTH 25
 #define BUFFER_SIZE 255
+#define MIN_BUFFER_POS 14
+#define PROMPT "dsmith@agsb $ "
 
 void app_main(void) {
 	u8g2_init();
 
-	char input, buffer[BUFFER_SIZE+1] = "dsmith@agsb $ ";
-	int buffer_pos = 14;
+	char input = '\0';
+	char buffer[BUFFER_SIZE+1] = PROMPT;
+	int buffer_pos = MIN_BUFFER_POS;
 
 	while (1) {
-		test(&input);
-		if (input == 1) {
-			buffer[buffer_pos] = 'A';
-			buffer_pos++;
+		get_keypad_input(&input);
+
+		if (input != '\0') {
+			if (input == '*') { buffer_pos--; buffer[buffer_pos] = '\0'; }
+
+			else if (input == '#') {
+				while (buffer_pos > 14) {
+					buffer_pos--;
+					buffer[buffer_pos] = '\0';
+				}
+			}
+
+			else {
+				buffer[buffer_pos] = input;
+				buffer_pos++;
+			}
 		}
 	
 		u8g2_ClearBuffer(&u8g2);
@@ -33,6 +47,6 @@ void app_main(void) {
 		}
 
 		u8g2_SendBuffer(&u8g2);
-		vTaskDelay(pdMS_TO_TICKS(33));
+		vTaskDelay(pdMS_TO_TICKS(100));
 	}
 }
