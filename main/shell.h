@@ -11,10 +11,24 @@
 
 
 
-char input = '\0', old_input = 'Z';
+// input = current input THIS cycle
+// old_input = last input LAST cycle
+// last_char = last key pressed (i.e. last valid input)
+char input = '\0', old_input = 'Z', last_char = 'X';
 char buffer[BUFFER_SIZE+1] = PROMPT;
-int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
-
+int buffer_pos = MIN_BUFFER_POS-1; // convention: points to the next free position
+char letters[10][4] = {
+	{'\0', '\0', '\0', '\0'}, // 0
+	{'\0', '\0', '\0', '\0'}, // 1
+	{'a', 'b', 'c', '\0'}, // 2
+	{'d', 'e', 'f', '\0'}, // 3
+	{'g', 'h', 'i', '\0'}, // 4
+	{'j', 'k', 'l', '\0'}, // 5
+	{'m', 'n', 'o', '\0'}, // 6
+	{'p', 'q', 'r', 's'}, // 7
+	{'t', 'u', 'v', '\0'}, // 8
+	{'w', 'x', 'y', 'z'} // 9
+};
 
 
 void del() { buffer_pos--; buffer[buffer_pos] = '\0'; }
@@ -27,10 +41,19 @@ void submit() {
 }
 
 void add() {
-	if (input != '#' && input != '*') {
-		buffer[buffer_pos] = input;
-		buffer_pos++;
-	}
+	static int curr_cycle = 0;
+
+	if (input == '#' || input == '*') return;
+
+	bool is_last_char = input == last_char;
+
+	curr_cycle = is_last_char ? (curr_cycle + 1) % 4: 0;
+
+	char char_to_push = letters[(int)input - '0'][curr_cycle];
+	if (char_to_push == '\0') return;
+
+	buffer_pos = is_last_char ? buffer_pos : buffer_pos + 1;
+	buffer[buffer_pos] = char_to_push;
 }
 
 
@@ -42,6 +65,8 @@ void handle_input() {
 		else if (input == '#') submit();
 
 		else add();
+
+		last_char = input;
 	}
 
 	old_input = input;
