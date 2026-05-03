@@ -45,7 +45,6 @@ void get_keypad_input(char *input) {
 		for (int j = 0; j < 4; j++) {
 			if (gpio_get_level(rows[j]) == 0) {
 				*input = keymap[j][i];
-				printf("connection\n");
 				return;
 			}
 		}
