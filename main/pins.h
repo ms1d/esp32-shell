@@ -8,10 +8,10 @@
 #define RES   14
 
 // KEYPAD (3X4 MATRIX MEMBRANE)
-#define P0 13
-#define P1 12
-#define P2 11
-#define P3 10
-#define P4 9
-#define P5 8
-#define P6 7
+#define R2 13
+#define R3 12
+#define C3 11
+#define R4 10
+#define C1 9
+#define R1 8
+#define C2 7
