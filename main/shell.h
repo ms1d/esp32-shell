@@ -19,16 +19,12 @@ int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
 
 void del() { buffer_pos--; buffer[buffer_pos] = '\0'; }
 
-
-
 void submit() {
 	while (buffer_pos > MIN_BUFFER_POS) {
 		buffer_pos--;
 		buffer[buffer_pos] = '\0';
 	}
 }
-
-
 
 void add() {
 	if (input != '#' && input != '*') {
