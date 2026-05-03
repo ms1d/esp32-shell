@@ -14,3 +14,5 @@ compile-commands.json
 build/
 .clangd
 /tools
+# prevent git from tracking data for my specific use case
+/main/data.h
