@@ -13,14 +13,14 @@ void app_main(void) {
 	u8g2_init();
 	keypad_init();
 
-	char input = '\0';
+	char input = '\0', old_input = 'Z';
 	char buffer[BUFFER_SIZE+1] = PROMPT;
 	int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
 
 	while (1) {
 		get_keypad_input(&input);
 
-		if (input != '\0') {
+		if (input != '\0' && input != old_input) {
 			if (input == '*' && buffer_pos > MIN_BUFFER_POS) {
 				buffer_pos--; buffer[buffer_pos] = '\0';
 			}
@@ -36,8 +36,10 @@ void app_main(void) {
 				buffer[buffer_pos] = input;
 				buffer_pos++;
 			}
+
 		}
 	
+		old_input = input;
 		u8g2_ClearBuffer(&u8g2);
 		for (int i = 0; i < BUFFER_SIZE; i+= LINE_WIDTH) {
 			char line_buffer[LINE_WIDTH+1];
