@@ -11,25 +11,28 @@
 
 void app_main(void) {
 	u8g2_init();
+	keypad_init();
 
 	char input = '\0';
 	char buffer[BUFFER_SIZE+1] = PROMPT;
-	int buffer_pos = MIN_BUFFER_POS;
+	int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
 
 	while (1) {
 		get_keypad_input(&input);
 
 		if (input != '\0') {
-			if (input == '*') { buffer_pos--; buffer[buffer_pos] = '\0'; }
+			if (input == '*' && buffer_pos > MIN_BUFFER_POS) {
+				buffer_pos--; buffer[buffer_pos] = '\0';
+			}
 
 			else if (input == '#') {
-				while (buffer_pos > 14) {
+				while (buffer_pos > MIN_BUFFER_POS) {
 					buffer_pos--;
 					buffer[buffer_pos] = '\0';
 				}
 			}
 
-			else {
+			else if (input != '*') {
 				buffer[buffer_pos] = input;
 				buffer_pos++;
 			}
