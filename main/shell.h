@@ -3,6 +3,7 @@
 
 
 #include "data.h"
+#include <stdio.h>
 
 
 
@@ -10,7 +11,7 @@
 #define LINE_HEIGHT 8
 #define LINE_WIDTH 25
 #define BUFFER_SIZE 255
-#define MIN_BUFFER_POS 13
+#define MIN_BUFFER_POS 14
 #define PROMPT "dsmith@agsb $ "
 
 
@@ -22,22 +23,25 @@ char input = '\0', old_input = 'Z', last_char = 'X';
 char buffer[BUFFER_SIZE+1] = PROMPT;
 int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
 char letters[10][4] = {
-	{'\0', '\0', '\0', '\0'}, // 0
-	{'\0', '\0', '\0', '\0'}, // 1
-	{'a', 'b', 'c', '\0'}, // 2
-	{'d', 'e', 'f', '\0'}, // 3
-	{'g', 'h', 'i', '\0'}, // 4
-	{'j', 'k', 'l', '\0'}, // 5
-	{'m', 'n', 'o', '\0'}, // 6
-	{'p', 'q', 'r', 's'}, // 7
-	{'t', 'u', 'v', '\0'}, // 8
-	{'w', 'x', 'y', 'z'} // 9
+	{ '\0', '\0', '\0', '\0' },	 // 0
+	{ '\0', '\0', '\0', '\0' },	 // 1
+	{ 'a' , 'b' , 'c' , '\0' },  // 2
+	{ 'd' , 'e' , 'f' , '\0' },  // 3
+	{ 'g' , 'h' , 'i' , '\0' },  // 4
+	{ 'j' , 'k' , 'l' , '\0' },  // 5
+	{ 'm' , 'n' , 'o' , '\0' },  // 6
+	{ 'p' , 'q' , 'r' , 's'  },  // 7
+	{ 't' , 'u' , 'v' , '\0' },  // 8
+	{ 'w' , 'x' , 'y' , 'z'  }   // 9
 };
 
 
 void del() {
-	buffer_pos--;
-	buffer[buffer_pos] = '\0';
+	if (buffer[buffer_pos] != '\0') buffer[buffer_pos] = '\0';
+	else {
+		buffer_pos--;
+		buffer[buffer_pos] = '\0';
+	}
 }
 
 void submit() {
@@ -67,15 +71,17 @@ void add() {
 
 	if (input == '#' || input == '*') return;
 
-	bool is_last_char = input == last_char;
-
-	curr_cycle = is_last_char ? (curr_cycle + 1) % 4: 0;
+	curr_cycle = input == last_char ? (curr_cycle + 1) % 4: 0;
 
 	char char_to_push = letters[(int)input - '0'][curr_cycle];
 	if (char_to_push == '\0') return;
 
-	buffer_pos = is_last_char ? buffer_pos : buffer_pos + 1;
 	buffer[buffer_pos] = char_to_push;
+	buffer_pos = input == last_char
+		|| (input != last_char && old_input == '\0')
+	   	? buffer_pos : buffer_pos + 1;
+	printf("BREAK: BUFFER = %s\n", buffer);
+	printf("CHAR PUSHED = %c\n", char_to_push);
 }
 
 
@@ -86,7 +92,11 @@ void handle_input() {
 
 		else if (input == '#') submit();
 
-		else add();
+		else {
+			// QOL - advance a space if user changes character
+			if (last_char != input) submit();
+			add();
+		}
 
 		last_char = input;
 	}
