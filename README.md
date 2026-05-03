@@ -32,4 +32,14 @@ A small mock up shell for the esp32 s3 microcontroller, using esp-idf
 
 - Wire up MCU to a `SPI SH1106 OLED screen` & `4x4 Matrix Keypad`
 
+- Create `main/data.h` locally. It should contain:
+
+  - `const char *cmd_names[]`
+
+  - `const char *cmd_outputs[]`
+
+  - `cmd_names[i]` should be the command name for `cmd_outputs[i]`
+
+  - `const int cmd_count`
+
 - `idf.py -p /dev/tty<target_port> build flash` to build and flash the MCU
