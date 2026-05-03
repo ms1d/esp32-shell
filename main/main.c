@@ -1,45 +1,19 @@
 #include "freertos/idf_additions.h"
 #include "oled_setup.h"
 #include "keypad.h"
+#include "shell.h"
 
-#define TOP_LINE_Y 6
-#define LINE_HEIGHT 8
-#define LINE_WIDTH 25
-#define BUFFER_SIZE 255
-#define MIN_BUFFER_POS 14
-#define PROMPT "dsmith@agsb $ "
+
 
 void app_main(void) {
 	u8g2_init();
 	keypad_init();
 
-	char input = '\0', old_input = 'Z';
-	char buffer[BUFFER_SIZE+1] = PROMPT;
-	int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
 
 	while (1) {
 		get_keypad_input(&input);
+		handle_input();
 
-		if (input != '\0' && input != old_input) {
-			if (input == '*' && buffer_pos > MIN_BUFFER_POS) {
-				buffer_pos--; buffer[buffer_pos] = '\0';
-			}
-
-			else if (input == '#') {
-				while (buffer_pos > MIN_BUFFER_POS) {
-					buffer_pos--;
-					buffer[buffer_pos] = '\0';
-				}
-			}
-
-			else if (input != '*') {
-				buffer[buffer_pos] = input;
-				buffer_pos++;
-			}
-
-		}
-	
-		old_input = input;
 		u8g2_ClearBuffer(&u8g2);
 		for (int i = 0; i < BUFFER_SIZE; i+= LINE_WIDTH) {
 			char line_buffer[LINE_WIDTH+1];
