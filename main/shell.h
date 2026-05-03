@@ -2,11 +2,15 @@
 
 
 
+#include "data.h"
+
+
+
 #define TOP_LINE_Y 6
 #define LINE_HEIGHT 8
 #define LINE_WIDTH 25
 #define BUFFER_SIZE 255
-#define MIN_BUFFER_POS 14
+#define MIN_BUFFER_POS 13
 #define PROMPT "dsmith@agsb $ "
 
 
@@ -16,7 +20,7 @@
 // last_char = last key pressed (i.e. last valid input)
 char input = '\0', old_input = 'Z', last_char = 'X';
 char buffer[BUFFER_SIZE+1] = PROMPT;
-int buffer_pos = MIN_BUFFER_POS-1; // convention: points to the next free position
+int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
 char letters[10][4] = {
 	{'\0', '\0', '\0', '\0'}, // 0
 	{'\0', '\0', '\0', '\0'}, // 1
@@ -31,12 +35,30 @@ char letters[10][4] = {
 };
 
 
-void del() { buffer_pos--; buffer[buffer_pos] = '\0'; }
+void del() {
+	buffer_pos--;
+	buffer[buffer_pos] = '\0';
+}
 
 void submit() {
-	while (buffer_pos > MIN_BUFFER_POS) {
-		buffer_pos--;
-		buffer[buffer_pos] = '\0';
+	if (buffer[buffer_pos] != '\0') {
+		buffer_pos++;
+		return;
+	}
+
+	char input_buffer[BUFFER_SIZE+1];
+
+	// clear buffer + transfer to input_buffer in 1 go
+	for (int i = MIN_BUFFER_POS; buffer_pos > MIN_BUFFER_POS; i++, buffer_pos--) {
+		input_buffer[i-MIN_BUFFER_POS] = buffer[i];
+		buffer[i] = '\0';
+	}
+
+	for (int i = 0; i < cmd_count; i++) {
+		if (cmd_names[i] == input_buffer) {
+			for (int j = 0; j < BUFFER_SIZE; j++) buffer[j] = input_buffer[j];
+			break;
+		}
 	}
 }
 

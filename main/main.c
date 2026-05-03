@@ -2,7 +2,12 @@
 #include "oled_setup.h"
 #include "keypad.h"
 #include "shell.h"
+#include <limits.h>
 
+#define CURSOR "_"
+#define DISPLAY_CHAR_WIDTH 5
+#define SPACE_WIDTH 1
+#define CURSOR_VERT_OFFSET 2
 
 
 void app_main(void) {
@@ -23,9 +28,23 @@ void app_main(void) {
 			}
 
 			u8g2_DrawStr(&u8g2, 0, TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT, line_buffer);
+
+			// Draw cursor
+			if (i < buffer_pos && i + LINE_WIDTH > buffer_pos) {
+				u8g2_DrawStr(&u8g2,
+						(buffer_pos - i % LINE_WIDTH) * DISPLAY_CHAR_WIDTH + SPACE_WIDTH,
+						TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT + CURSOR_VERT_OFFSET, CURSOR);
+			}
 		}
 
 		u8g2_SendBuffer(&u8g2);
+	
+		//DEBUG
+	
+		printf("\nBUFFER: %s\n", buffer);
+		printf("BUFFER_POS: %d\n", buffer_pos);
+		printf("BUFFER[BUFFER_POS]: %c\n", buffer[buffer_pos]);
+
 		vTaskDelay(pdMS_TO_TICKS(100));
 	}
 }
