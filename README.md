@@ -49,3 +49,38 @@ A small mock up shell for the esp32 s3 microcontroller, using esp-idf
 ## Notes & Quirks
 
 - Command outputs must be longer than the length of the shell PROMPT so they overwrite it
+
+- Command outputs must be shorter than BUFFER_SIZE: if they are too long it will crash the program
+
+## Sample `main/data.h`
+
+``` C
+#define ARR_LEN(a) (sizeof(a) / sizeof(a[0]))
+#define STR_LEN(s) (sizeof(s) - 1)
+
+const char *cmd_names[] = {
+  "hello world"
+};
+
+const int cmd_count = ARR_LEN(cmd_names);
+
+const char *cmds[] = {
+  "hello world!!!!!!"
+};
+
+_Static_assert(ARR_LEN(cmd_names) == ARR_LEN(cmds),
+"cmd_names and cmds must be the same length");
+
+#include <string.h>
+
+int cmd_name_lens[ARR_LEN(cmd_names)];
+int cmd_lens[ARR_LEN(cmds)];
+
+// Run at startup (main/main.c's app_main())
+void init_data() {
+    for (size_t i = 0; i < ARR_LEN(cmd_names); i++) {
+        cmd_name_lens[i] = strlen(cmd_names[i]);
+        cmd_lens[i]      = strlen(cmds[i]);
+    }
+}
+```
