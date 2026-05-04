@@ -35,6 +35,11 @@ char letters[10][4] = {
 	{ 'w' , 'x' , 'y' , 'z'  }   // 9
 };
 
+enum mode_t {
+	SHELL = 0,
+	VIEW  = 1
+} curr_mode = SHELL;
+
 
 void del() {
 	if (buffer[buffer_pos] != '\0') buffer[buffer_pos] = '\0';
@@ -59,9 +64,9 @@ void submit() {
 	}
 
 	for (int i = 0; i < cmd_count; i++) {
-		if (cmd_names[i] == input_buffer) {
-			for (int j = 0; j < BUFFER_SIZE; j++) buffer[j] = input_buffer[j];
-			break;
+		if (cmd_names[i] == input_buffer && curr_mode != VIEW) {
+			for (int j = 0; j < BUFFER_SIZE; j++) { buffer[j] = input_buffer[j]; }
+			curr_mode = VIEW;
 		}
 	}
 }
@@ -84,17 +89,15 @@ void add() {
 	printf("CHAR PUSHED = %c\n", char_to_push);
 }
 
-
-
-void handle_input() {
-	if (input != '\0' && input != old_input) {
+void handle_shell_input() {
+    if (input != '\0' && input != old_input) {
 		if (input == '*' && buffer_pos > MIN_BUFFER_POS) del();
 
 		else if (input == '#') submit();
 
 		else {
 			// QOL - advance a space if user changes character
-			if (last_char != input) submit();
+			if (buffer[buffer_pos] != '\0' && last_char != input) submit();
 			add();
 		}
 
@@ -103,3 +106,33 @@ void handle_input() {
 
 	old_input = input;
 }
+
+
+
+void next_page() {
+	
+}
+
+void prev_page() {
+	
+}
+
+void handle_view_input() {
+	switch (input) {
+		case '\0':
+			return;
+		case '#':
+			next_page();
+			break;
+		case '*':
+			prev_page();
+			break;
+		default:
+			curr_mode = SHELL;
+            break;
+	}
+}
+
+
+
+void handle_input() { curr_mode == SHELL ? handle_shell_input() : handle_view_input(); }
