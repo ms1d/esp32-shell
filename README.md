@@ -45,3 +45,7 @@ A small mock up shell for the esp32 s3 microcontroller, using esp-idf
   - `const int cmd_lens[]`
 
 - `idf.py -p /dev/tty<target_port> build flash` to build and flash the MCU
+
+## Notes & Quirks
+
+- Command outputs must be longer than the length of the shell PROMPT so they overwrite it
