@@ -6,7 +6,7 @@
 #define TOP_LINE_Y 6
 #define LINE_HEIGHT 8
 #define LINE_WIDTH 25
-#define BUFFER_SIZE 255
+#define BUFFER_SIZE 1200
 #define MIN_BUFFER_POS 14
 #define PROMPT "dsmith@agsb $ "
 #define MAX_CHARS_ON_SCREEN 190
@@ -71,15 +71,12 @@ void submit() {
 		bool match = curr_mode != VIEW;
 		const int cmd_name_len = cmd_name_lens[i];
 
-		printf("CHECKING LENS: %d vs %d\n", cmd_name_len, input_len);
 		if (cmd_name_len != input_len) continue;
 
 		for (int j = 0; j < cmd_name_lens[i] && input_buffer[j] != '\0'; j++) {
-			printf("COMPARISON NO %d: %c vs %c\n", j, input_buffer[j], cmd_names[i][j]);
 			match = match && (cmd_names[i][j] == input_buffer[j]);
 		}
 
-		printf("SUBMIT: MATCH = %d\n", match);
 		if (match) {
 			curr_mode = VIEW; curr_cmd_index = i; curr_view_page = 0; old_curr_view_page = -1;
 		}
@@ -100,12 +97,9 @@ void add() {
 	buffer_pos = input == last_char
 		|| (input != last_char && old_input == '\0')
 	   	? buffer_pos : buffer_pos + 1;
-	printf("BREAK: BUFFER = %s\n", buffer);
-	printf("CHAR PUSHED = %c\n", char_to_push);
 }
 
 void handle_shell_input() {
-	printf("RUNNING SHELL MODE\n");
     if (input != '\0' && input != old_input) {
 		if (input == '*' && buffer_pos > MIN_BUFFER_POS) del();
 
@@ -137,10 +131,10 @@ void handle_view_input() {
 		case '\0':
 			break;
 		case '#':
-			mv_page(1);
+			if (old_input != input) mv_page(1);
 			break;
 		case '*':
-			mv_page(-1);
+			if (old_input != input) mv_page(-1);
 			break;
 		default: // Any other key will return to the shell
 			curr_mode = SHELL;
@@ -152,22 +146,20 @@ void handle_view_input() {
             break;
 	}
 
-	printf("running view mode!\n");
 	// Do not modify buffer if nothing has changed!
-	if (curr_view_page == old_curr_view_page) return;
+	if (curr_view_page == old_curr_view_page) goto after_render;
 
-	printf("starting...\n");
 	const char *cmd = cmds[curr_cmd_index];
 	const int len = cmd_lens[curr_cmd_index];
 
 	for (int i = 0; i < len; i++) {
 		int index = curr_view_page * MAX_CHARS_ON_SCREEN + i;
 		buffer[i] = index > len ? '\0' : cmd[index];
-		printf("PRINTED %dth CHAR: %c\n", i, buffer[i]);
     }
-	printf("finished view mode!\n");
 
-    old_curr_view_page = curr_view_page;
+
+after_render:old_curr_view_page = curr_view_page;
+	old_input = input;
 }
 
 

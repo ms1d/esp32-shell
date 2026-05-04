@@ -37,15 +37,7 @@ void app_main(void) {
 			}
 		}
 
-		u8g2_SendBuffer(&u8g2);
-	
-		//DEBUG
-	
-		printf("\nBUFFER: %s\n", buffer);
-		printf("BUFFER_POS: %d\n", buffer_pos);
-		printf("BUFFER[BUFFER_POS]: %c\n", buffer[buffer_pos]);
-		printf("MODE = %d\n", curr_mode);
-
+		u8g2_SendBuffer(&u8g2);	
 		vTaskDelay(pdMS_TO_TICKS(100));
 	}
 }
