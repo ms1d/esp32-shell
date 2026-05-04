@@ -1,5 +1,3 @@
-#pragma once
-
 // OLED (7-PIN SPI SH1106)
 #define CLK   18
 #define MOSI  17

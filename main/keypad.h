@@ -1,7 +1,3 @@
-#pragma once
-
-
-
 #include "driver/gpio.h"
 #include "hal/gpio_types.h"
 #include "pins.h"

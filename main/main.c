@@ -17,6 +17,7 @@ void app_main(void) {
 	while (1) {
 		get_keypad_input(&input);
 		handle_input();
+		init_data(); // function in my data.h - feel free to omit if you do not need it
 
 		u8g2_ClearBuffer(&u8g2);
 		for (int i = 0; i < BUFFER_SIZE; i+= LINE_WIDTH) {
