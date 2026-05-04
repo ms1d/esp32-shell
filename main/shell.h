@@ -20,17 +20,17 @@
 char input = '\0', old_input = 'Z', last_char = 'X';
 char buffer[BUFFER_SIZE+1] = PROMPT;
 int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
-char letters[10][4] = {
-	{ '\0', '\0', '\0', '\0' },	 // 0
-	{ '\0', '\0', '\0', '\0' },	 // 1
-	{ 'a' , 'b' , 'c' , '\0' },  // 2
-	{ 'd' , 'e' , 'f' , '\0' },  // 3
-	{ 'g' , 'h' , 'i' , '\0' },  // 4
-	{ 'j' , 'k' , 'l' , '\0' },  // 5
-	{ 'm' , 'n' , 'o' , '\0' },  // 6
-	{ 'p' , 'q' , 'r' , 's'  },  // 7
-	{ 't' , 'u' , 'v' , '\0' },  // 8
-	{ 'w' , 'x' , 'y' , 'z'  }   // 9
+char letters[10][5] = {
+    { '\0', '\0', '\0', '\0', '\0' },	// 0
+    { '1' , '-' , '\0', '\0', '\0' },	// 1
+    { '2' , 'a' , 'b' , 'c' , '\0' },   // 2
+    { '3' , 'd' , 'e' , 'f' , '\0' },   // 3
+    { '4' , 'g' , 'h' , 'i' , '\0' },   // 4
+    { '5' , 'j' , 'k' , 'l' , '\0' },   // 5
+    { '6' , 'm' , 'n' , 'o' , '\0' },   // 6
+    { '7' , 'p' , 'q' , 'r' , 's'  },   // 7
+    { '8' , 't' , 'u' , 'v' , '\0' },   // 8
+    { '9' , 'w' , 'x' , 'y' , 'z'  }    // 9
 };
 
 
@@ -105,6 +105,7 @@ void add() {
 }
 
 void handle_shell_input() {
+	printf("RUNNING SHELL MODE\n");
     if (input != '\0' && input != old_input) {
 		if (input == '*' && buffer_pos > MIN_BUFFER_POS) del();
 
@@ -134,7 +135,7 @@ void mv_page(const int sign) {
 void handle_view_input() {
 	switch (input) {
 		case '\0':
-			return;
+			break;
 		case '#':
 			mv_page(1);
 			break;
@@ -151,9 +152,11 @@ void handle_view_input() {
             break;
 	}
 
+	printf("running view mode!\n");
 	// Do not modify buffer if nothing has changed!
 	if (curr_view_page == old_curr_view_page) return;
 
+	printf("starting...\n");
 	const char *cmd = cmds[curr_cmd_index];
 	const int len = cmd_lens[curr_cmd_index];
 
@@ -162,6 +165,7 @@ void handle_view_input() {
 		buffer[i] = index > len ? '\0' : cmd[index];
 		printf("PRINTED %dth CHAR: %c\n", i, buffer[i]);
     }
+	printf("finished view mode!\n");
 
     old_curr_view_page = curr_view_page;
 }
