@@ -13,9 +13,11 @@
 #define BUFFER_SIZE 255
 #define MIN_BUFFER_POS 14
 #define PROMPT "dsmith@agsb $ "
+#define MAX_CHARS_ON_SCREEN 190
 
 
 
+// SHELL MODE
 // input = current input THIS cycle
 // old_input = last input LAST cycle
 // last_char = last key pressed (i.e. last valid input)
@@ -35,10 +37,14 @@ char letters[10][4] = {
 	{ 'w' , 'x' , 'y' , 'z'  }   // 9
 };
 
+
+// VIEW MODE
 enum mode_t {
 	SHELL = 0,
 	VIEW  = 1
 } curr_mode = SHELL;
+int curr_view_page, old_curr_view_page, curr_cmd_index;
+
 
 
 void del() {
@@ -56,17 +62,30 @@ void submit() {
 	}
 
 	char input_buffer[BUFFER_SIZE+1];
+	int input_len = 0;
 
 	// clear buffer + transfer to input_buffer in 1 go
-	for (int i = MIN_BUFFER_POS; buffer_pos > MIN_BUFFER_POS; i++, buffer_pos--) {
+	for (int i = MIN_BUFFER_POS; buffer_pos > MIN_BUFFER_POS && buffer[i] != '\0'; i++, buffer_pos--) {
 		input_buffer[i-MIN_BUFFER_POS] = buffer[i];
+		input_len++;
 		buffer[i] = '\0';
 	}
 
 	for (int i = 0; i < cmd_count; i++) {
-		if (cmd_names[i] == input_buffer && curr_mode != VIEW) {
-			for (int j = 0; j < BUFFER_SIZE; j++) { buffer[j] = input_buffer[j]; }
-			curr_mode = VIEW;
+		bool match = curr_mode != VIEW;
+		const int cmd_name_len = cmd_name_lens[i];
+
+		printf("CHECKING LENS: %d vs %d\n", cmd_name_len, input_len);
+		if (cmd_name_len != input_len) continue;
+
+		for (int j = 0; j < cmd_name_lens[i] && input_buffer[j] != '\0'; j++) {
+			printf("COMPARISON NO %d: %c vs %c\n", j, input_buffer[j], cmd_names[i][j]);
+			match = match && (cmd_names[i][j] == input_buffer[j]);
+		}
+
+		printf("SUBMIT: MATCH = %d\n", match);
+		if (match) {
+			curr_mode = VIEW; curr_cmd_index = i; curr_view_page = 0; old_curr_view_page = -1;
 		}
 	}
 }
@@ -107,30 +126,48 @@ void handle_shell_input() {
 	old_input = input;
 }
 
-
-
-void next_page() {
-	
+void mv_page(const int sign) {
+	if (sign != 1 && sign != -1) return;
+	if ((curr_view_page + sign) * MAX_CHARS_ON_SCREEN > cmd_lens[curr_cmd_index]
+			|| (curr_view_page + sign) < 0) return;
+	curr_view_page += sign;
 }
 
-void prev_page() {
-	
-}
+
 
 void handle_view_input() {
 	switch (input) {
 		case '\0':
 			return;
 		case '#':
-			next_page();
+			mv_page(1);
 			break;
 		case '*':
-			prev_page();
+			mv_page(-1);
 			break;
-		default:
+		default: // Any other key will return to the shell
 			curr_mode = SHELL;
+			for (int i = 0; i < BUFFER_SIZE; i++) {
+				if (i < MIN_BUFFER_POS) buffer[i] = PROMPT[i];
+				else buffer[i] = '\0';
+			}
+			buffer_pos = MIN_BUFFER_POS;
             break;
 	}
+
+	// Do not modify buffer if nothing has changed!
+	if (curr_view_page == old_curr_view_page) return;
+
+	const char *cmd = cmds[curr_cmd_index];
+	const int len = cmd_lens[curr_cmd_index];
+
+	for (int i = 0; i < len; i++) {
+		int index = curr_view_page * MAX_CHARS_ON_SCREEN + i;
+		buffer[i] = index > len ? '\0' : cmd[index];
+		printf("PRINTED %dth CHAR: %c\n", i, buffer[i]);
+    }
+
+    old_curr_view_page = curr_view_page;
 }
 
 
