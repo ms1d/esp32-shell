@@ -1,4 +1,5 @@
 #include "data.h"
+#include "sh1106_setup.h"
 
 
 
@@ -9,7 +10,10 @@
 #define MIN_BUFFER_POS 14
 #define PROMPT "dsmith@agsb $ "
 #define MAX_CHARS_ON_SCREEN 190
-
+#define CURSOR "_"
+#define DISPLAY_CHAR_WIDTH 5
+#define SPACE_WIDTH 1
+#define CURSOR_VERT_OFFSET 2
 
 
 // SHELL MODE
@@ -164,3 +168,28 @@ after_render:old_curr_view_page = curr_view_page;
 
 
 void handle_input() { curr_mode == SHELL ? handle_shell_input() : handle_view_input(); }
+
+
+
+void draw_screen(const char *view_buffer, const int len) {
+	for (int i = 0; i < len; i+= LINE_WIDTH) {
+		char line_buffer[LINE_WIDTH+1];
+		
+		for (int j = 0; j < LINE_WIDTH; j++) {
+            line_buffer[j] = view_buffer[i+j];
+        }
+
+		u8g2_DrawStr(&u8g2,
+				0,
+				TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT,
+				line_buffer);
+
+		if (curr_mode == SHELL
+				&& i < buffer_pos
+				&& i + LINE_WIDTH > buffer_pos) {
+				u8g2_DrawStr(&u8g2,
+						(buffer_pos - i % LINE_WIDTH) * DISPLAY_CHAR_WIDTH + SPACE_WIDTH,
+						TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT + CURSOR_VERT_OFFSET, CURSOR);
+		}
+	}
+}
