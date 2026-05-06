@@ -3,6 +3,10 @@
 
 
 
+// Unix-like shell with input inspired by old phone keypads
+
+
+
 #define TOP_LINE_Y 6
 #define LINE_HEIGHT 8
 #define LINE_WIDTH 25
@@ -19,8 +23,8 @@
 
 // SHELL MODE
 // input = current input THIS cycle
-// old_input = last input LAST cycle
-// last_char = last key pressed (i.e. last valid input)
+// old_input = last input LAST cycle (inlcuding no input)
+// last_char = last input LAST cycle (excluding no input)
 char input = '\0', old_input = 'Z', last_char = 'X';
 
 // Do NOT modify shell_buffer_1 or shell_buffer_2
@@ -28,17 +32,22 @@ char input = '\0', old_input = 'Z', last_char = 'X';
 char shell_buffer_1[SHELL_BUFFER_SIZE+1] = PROMPT,
 	 shell_buffer_2[SHELL_BUFFER_SIZE+1] = PROMPT,
 	 *curr_shell_buffer = shell_buffer_1;
-int shell_buffer_pos = MIN_SHELL_BUFFER_POS; // convention: points to the next free position
 
+// convention: points to the next free position of the buffer (like a stack)
+int shell_buffer_pos = MIN_SHELL_BUFFER_POS;
+
+// Helpers to use the buffers
 void change_buffer() {
 	curr_shell_buffer = curr_shell_buffer == shell_buffer_1 ? shell_buffer_2 : shell_buffer_1;
 }
 
+// Modifies curr buffer in place
 void modify_curr_buffer(char c) {
 	change_buffer();
 	curr_shell_buffer[shell_buffer_pos] = c;
 }
 
+// Resets both buffers to PROMPT
 void reset_buffers() {
 	shell_buffer_pos = MIN_SHELL_BUFFER_POS;
 	for (int i = 0; i < MIN_SHELL_BUFFER_POS; i++) {
@@ -83,26 +92,30 @@ char letters[10][5] = {
 
 
 
-// VIEW MODE
+// VIEW MODE FLAGS
 enum mode_t {
 	SHELL = 0,
 	VIEW  = 1
 } curr_mode = SHELL;
+// Current page being displayed of current command,
+// current command index being displayed in cmds[] and cmd_lens[]
 int curr_view_page, curr_cmd_index;
 
 
 
 void del() {
-	if (curr_shell_buffer[shell_buffer_pos] != '\0') modify_curr_buffer('\0');
-	else { decrement_shell_buffer_pos(); modify_curr_buffer('\0'); }
+	if (curr_shell_buffer[shell_buffer_pos] == '\0') decrement_shell_buffer_pos();
+	modify_curr_buffer('\0');
 }
 
 void submit() {
+	// First purpose: to "lock in" a user's choice
 	if (curr_shell_buffer[shell_buffer_pos] != '\0') {
 		increment_shell_buffer_pos('\0');
 		return;
 	}
 
+	// Second purpose: to actually submit input
 	char input_buffer[SHELL_BUFFER_SIZE+1];
 	int input_len = 0;
 
@@ -113,15 +126,15 @@ void submit() {
 		curr_shell_buffer[i] = '\0'; change_buffer(); curr_shell_buffer[i] = '\0';
 	}
 
+	// Match input to a command
 	for (int i = 0; i < cmd_count; i++) {
 		bool match = curr_mode != VIEW;
 		const int cmd_name_len = cmd_name_lens[i];
 
 		if (cmd_name_len != input_len) continue;
 
-		for (int j = 0; j < cmd_name_lens[i] && input_buffer[j] != '\0'; j++) {
+		for (int j = 0; j < cmd_name_lens[i] && input_buffer[j] != '\0'; j++)
 			match = match && (cmd_names[i][j] == input_buffer[j]);
-		}
 
 		if (match) {
 			curr_mode = VIEW; curr_cmd_index = i; curr_view_page = 0;
@@ -130,11 +143,13 @@ void submit() {
 }
 
 void add() {
+	// Multi-tap keys => need a dedicated counter
+	// Resets when new key pressed
 	static int curr_cycle = 0;
 
 	if (input == '#' || input == '*') return;
 
-	curr_cycle = input == last_char ? (curr_cycle + 1) % 4: 0;
+	curr_cycle = input == last_char ? (curr_cycle + 1) % 4 : 0;
 
 	char char_to_push = letters[(int)input - '0'][curr_cycle];
 	if (char_to_push == '\0') return;
@@ -160,14 +175,14 @@ void handle_shell_input() {
 	old_input = input;
 }
 
+
+
 void mv_page(const int sign) {
 	if (sign != 1 && sign != -1) return;
 	if ((curr_view_page + sign) * MAX_CHARS_ON_SCREEN > cmd_lens[curr_cmd_index]
 			|| (curr_view_page + sign) < 0) return;
 	curr_view_page += sign;
 }
-
-
 
 void handle_view_input() {
 	switch (input) {
