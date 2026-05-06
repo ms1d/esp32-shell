@@ -6,8 +6,8 @@
 #define TOP_LINE_Y 6
 #define LINE_HEIGHT 8
 #define LINE_WIDTH 25
-#define BUFFER_SIZE 1200
-#define MIN_BUFFER_POS 14
+#define SHELL_BUFFER_SIZE 1200
+#define MIN_SHELL_BUFFER_POS 14
 #define PROMPT "dsmith@agsb $ "
 #define MAX_CHARS_ON_SCREEN 190
 #define CURSOR "_"
@@ -16,13 +16,58 @@
 #define CURSOR_VERT_OFFSET 2
 
 
+
 // SHELL MODE
 // input = current input THIS cycle
 // old_input = last input LAST cycle
 // last_char = last key pressed (i.e. last valid input)
 char input = '\0', old_input = 'Z', last_char = 'X';
-char buffer[BUFFER_SIZE+1] = PROMPT;
-int buffer_pos = MIN_BUFFER_POS; // convention: points to the next free position
+
+// Do NOT modify shell_buffer_1 or shell_buffer_2
+// Use curr_shell_buffer as an interface
+char shell_buffer_1[SHELL_BUFFER_SIZE+1] = PROMPT,
+	 shell_buffer_2[SHELL_BUFFER_SIZE+1] = PROMPT,
+	 *curr_shell_buffer = shell_buffer_1;
+int shell_buffer_pos = MIN_SHELL_BUFFER_POS; // convention: points to the next free position
+
+void change_buffer() {
+	curr_shell_buffer = curr_shell_buffer == shell_buffer_1 ? shell_buffer_2 : shell_buffer_1;
+}
+
+void modify_curr_buffer(char c) {
+	change_buffer();
+	curr_shell_buffer[shell_buffer_pos] = c;
+}
+
+void reset_buffers() {
+	shell_buffer_pos = MIN_SHELL_BUFFER_POS;
+	for (int i = 0; i < MIN_SHELL_BUFFER_POS; i++) {
+		shell_buffer_1[i] = PROMPT[i];
+		shell_buffer_2[i] = PROMPT[i];
+	}
+	for (int i = MIN_SHELL_BUFFER_POS; i < SHELL_BUFFER_SIZE; i++) {
+		shell_buffer_1[i] = '\0';
+		shell_buffer_2[i] = '\0';
+	}
+}
+
+// Effectively decrements the buffer and fills the last position with a null terminator
+void decrement_shell_buffer_pos() {
+	curr_shell_buffer[shell_buffer_pos] = '\0';
+	change_buffer();
+	curr_shell_buffer[shell_buffer_pos] = '\0';
+	shell_buffer_pos--;
+}
+
+// Inserts c after incrementing
+void increment_shell_buffer_pos(char c) {
+	char curr_tail = curr_shell_buffer[shell_buffer_pos];
+	change_buffer();
+	curr_shell_buffer[shell_buffer_pos] = curr_tail;
+	shell_buffer_pos++;
+	curr_shell_buffer[shell_buffer_pos] = c;
+}
+
 char letters[10][5] = {
     { '\0', '\0', '\0', '\0', '\0' },	// 0
     { '1' , '-' , '\0', '\0', '\0' },	// 1
@@ -37,37 +82,35 @@ char letters[10][5] = {
 };
 
 
+
 // VIEW MODE
 enum mode_t {
 	SHELL = 0,
 	VIEW  = 1
 } curr_mode = SHELL;
-int curr_view_page, old_curr_view_page, curr_cmd_index;
+int curr_view_page, curr_cmd_index;
 
 
 
 void del() {
-	if (buffer[buffer_pos] != '\0') buffer[buffer_pos] = '\0';
-	else {
-		buffer_pos--;
-		buffer[buffer_pos] = '\0';
-	}
+	if (curr_shell_buffer[shell_buffer_pos] != '\0') modify_curr_buffer('\0');
+	else { decrement_shell_buffer_pos(); modify_curr_buffer('\0'); }
 }
 
 void submit() {
-	if (buffer[buffer_pos] != '\0') {
-		buffer_pos++;
+	if (curr_shell_buffer[shell_buffer_pos] != '\0') {
+		increment_shell_buffer_pos('\0');
 		return;
 	}
 
-	char input_buffer[BUFFER_SIZE+1];
+	char input_buffer[SHELL_BUFFER_SIZE+1];
 	int input_len = 0;
 
-	// clear buffer + transfer to input_buffer in 1 go
-	for (int i = MIN_BUFFER_POS; buffer_pos > MIN_BUFFER_POS && buffer[i] != '\0'; i++, buffer_pos--) {
-		input_buffer[i-MIN_BUFFER_POS] = buffer[i];
+	// clear BOTH buffers + transfer to input_buffer in 1 go
+	for (int i = MIN_SHELL_BUFFER_POS; shell_buffer_pos > MIN_SHELL_BUFFER_POS && curr_shell_buffer[i] != '\0'; i++, shell_buffer_pos--) {
+		input_buffer[i-MIN_SHELL_BUFFER_POS] = curr_shell_buffer[i];
 		input_len++;
-		buffer[i] = '\0';
+		curr_shell_buffer[i] = '\0'; change_buffer(); curr_shell_buffer[i] = '\0';
 	}
 
 	for (int i = 0; i < cmd_count; i++) {
@@ -81,7 +124,7 @@ void submit() {
 		}
 
 		if (match) {
-			curr_mode = VIEW; curr_cmd_index = i; curr_view_page = 0; old_curr_view_page = -1;
+			curr_mode = VIEW; curr_cmd_index = i; curr_view_page = 0;
 		}
 	}
 }
@@ -96,21 +139,18 @@ void add() {
 	char char_to_push = letters[(int)input - '0'][curr_cycle];
 	if (char_to_push == '\0') return;
 
-	buffer[buffer_pos] = char_to_push;
-	buffer_pos = input == last_char
-		|| (input != last_char && old_input == '\0')
-	   	? buffer_pos : buffer_pos + 1;
+	modify_curr_buffer(char_to_push); 
 }
 
 void handle_shell_input() {
     if (input != '\0' && input != old_input) {
-		if (input == '*' && buffer_pos > MIN_BUFFER_POS) del();
+		if (input == '*' && shell_buffer_pos > MIN_SHELL_BUFFER_POS) del();
 
 		else if (input == '#') submit();
 
 		else {
 			// QOL - advance a space if user changes character
-			if (buffer[buffer_pos] != '\0' && last_char != input) submit();
+			if (curr_shell_buffer[shell_buffer_pos] != '\0' && last_char != input) submit();
 			add();
 		}
 
@@ -141,27 +181,10 @@ void handle_view_input() {
 			break;
 		default: // Any other key will return to the shell
 			curr_mode = SHELL;
-			for (int i = 0; i < BUFFER_SIZE; i++) {
-				if (i < MIN_BUFFER_POS) buffer[i] = PROMPT[i];
-				else buffer[i] = '\0';
-			}
-			buffer_pos = MIN_BUFFER_POS;
+			reset_buffers();
             break;
 	}
 
-	// Do not modify buffer if nothing has changed!
-	if (curr_view_page == old_curr_view_page) goto after_render;
-
-	const char *cmd = cmds[curr_cmd_index];
-	const int len = cmd_lens[curr_cmd_index];
-
-	for (int i = 0; i < len; i++) {
-		int index = curr_view_page * MAX_CHARS_ON_SCREEN + i;
-		buffer[i] = index > len ? '\0' : cmd[index];
-    }
-
-
-after_render:old_curr_view_page = curr_view_page;
 	old_input = input;
 }
 
@@ -171,12 +194,18 @@ void handle_input() { curr_mode == SHELL ? handle_shell_input() : handle_view_in
 
 
 
-void draw_screen(const char *view_buffer, const int len) {
+void draw_screen_internal(const char *buffer, const int len) {
+	static const char* old_buffer = NULL; static int old_len = 0;
+
+	// Skip renders that are unecessary
+	if (buffer == old_buffer && len == old_len) goto after_render;
+
+	u8g2_ClearBuffer(&u8g2);
 	for (int i = 0; i < len; i+= LINE_WIDTH) {
 		char line_buffer[LINE_WIDTH+1];
 		
 		for (int j = 0; j < LINE_WIDTH; j++) {
-            line_buffer[j] = view_buffer[i+j];
+            line_buffer[j] = buffer[i+j];
         }
 
 		u8g2_DrawStr(&u8g2,
@@ -184,12 +213,24 @@ void draw_screen(const char *view_buffer, const int len) {
 				TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT,
 				line_buffer);
 
-		if (curr_mode == SHELL
-				&& i < buffer_pos
-				&& i + LINE_WIDTH > buffer_pos) {
-				u8g2_DrawStr(&u8g2,
-						(buffer_pos - i % LINE_WIDTH) * DISPLAY_CHAR_WIDTH + SPACE_WIDTH,
-						TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT + CURSOR_VERT_OFFSET, CURSOR);
+		if (curr_mode == SHELL && i < shell_buffer_pos && i + LINE_WIDTH > shell_buffer_pos) {
+			u8g2_DrawStr(&u8g2,
+				(shell_buffer_pos - i % LINE_WIDTH) * DISPLAY_CHAR_WIDTH + SPACE_WIDTH,
+				TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT + CURSOR_VERT_OFFSET,
+				CURSOR
+			);
 		}
 	}
+	u8g2_SendBuffer(&u8g2);
+
+after_render: old_buffer = buffer; old_len = len;
+}
+
+
+
+void draw_screen() {
+	curr_mode == SHELL
+		? draw_screen_internal(curr_shell_buffer, shell_buffer_pos)
+		: draw_screen_internal(cmds[curr_cmd_index] + curr_view_page * MAX_CHARS_ON_SCREEN,
+				cmd_lens[curr_cmd_index] - curr_view_page * MAX_CHARS_ON_SCREEN);
 }
