@@ -48,9 +48,9 @@ A small mock up shell for the esp32 s3 microcontroller, using esp-idf
 
 ## Notes & Quirks
 
-- Command outputs must be longer than the length of the shell PROMPT so they overwrite it
+- `cmds[i]` must be longer than the length of the shell PROMPT to overwrite it
 
-- Command outputs must be shorter than BUFFER_SIZE: if they are too long it will crash the program
+- `cmds[i]` must be shorter than BUFFER_SIZE; otherwise it will crash the program
 
 ## Sample `main/data.h`
 
