@@ -99,7 +99,7 @@ enum mode_t {
 } curr_mode = SHELL;
 // Current page being displayed of current command,
 // current command index being displayed in cmds[] and cmd_lens[]
-int curr_view_page, curr_cmd_index;
+int curr_cmd_index, curr_view_line;
 
 
 
@@ -137,7 +137,7 @@ void submit() {
 			match = match && (cmd_names[i][j] == input_buffer[j]);
 
 		if (match) {
-			curr_mode = VIEW; curr_cmd_index = i; curr_view_page = 0;
+			curr_mode = VIEW; curr_cmd_index = i; curr_view_line = 0;
 		}
 	}
 }
@@ -177,11 +177,11 @@ void handle_shell_input() {
 
 
 
-void mv_page(const int sign) {
-	if (sign != 1 && sign != -1) return;
-	if ((curr_view_page + sign) * MAX_CHARS_ON_SCREEN > cmd_lens[curr_cmd_index]
-			|| (curr_view_page + sign) < 0) return;
-	curr_view_page += sign;
+// move curr_view_line by a certain amount safely
+void mv_line(const int sign) {
+	if ((curr_view_line + sign) * LINE_WIDTH > cmd_lens[curr_cmd_index]
+			|| (curr_view_line + sign) < 0) return;
+	curr_view_line += sign;
 }
 
 void handle_view_input() {
@@ -189,10 +189,10 @@ void handle_view_input() {
 		case '\0':
 			break;
 		case '#':
-			if (old_input != input) mv_page(1);
+			if (old_input != input) mv_line(1);
 			break;
 		case '*':
-			if (old_input != input) mv_page(-1);
+			if (old_input != input) mv_line(-1);
 			break;
 		default: // Any other key will return to the shell
 			curr_mode = SHELL;
@@ -246,6 +246,6 @@ after_render: old_buffer = buffer; old_len = len;
 void draw_screen() {
 	curr_mode == SHELL
 		? draw_screen_internal(curr_shell_buffer, shell_buffer_pos)
-		: draw_screen_internal(cmds[curr_cmd_index] + curr_view_page * MAX_CHARS_ON_SCREEN,
-				cmd_lens[curr_cmd_index] - curr_view_page * MAX_CHARS_ON_SCREEN);
+		: draw_screen_internal(cmds[curr_cmd_index] + curr_view_line * LINE_WIDTH,
+				cmd_lens[curr_cmd_index] - curr_view_line * LINE_WIDTH);
 }
