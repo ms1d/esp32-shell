@@ -154,7 +154,7 @@ void add() {
 		if (input == valid_keys[i]) valid = true;
 	if (!valid) return;
 
-	curr_cycle = input == last_char ? (curr_cycle + 1) % 4 : 0;
+	curr_cycle = input == last_char ? (curr_cycle + 1) % 5 : 0;
 
 	char char_to_push = letters[(int)input - '0'][curr_cycle];
 	if (char_to_push == '\0') return;
