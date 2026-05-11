@@ -1,6 +1,5 @@
 #include "freertos/idf_additions.h"
 #include "sh1106_setup.h"
-#include "keypad.h"
 #include "shell.h"
 
 

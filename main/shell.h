@@ -1,5 +1,6 @@
 #include "data.h"
 #include "sh1106_setup.h"
+#include "keypad.h"
 
 
 
@@ -78,16 +79,16 @@ void increment_shell_buffer_pos(char c) {
 }
 
 char letters[10][5] = {
-    { '\0', '\0', '\0', '\0', '\0' },	// 0
-    { '1' , '-' , '\0', '\0', '\0' },	// 1
-    { '2' , 'a' , 'b' , 'c' , '\0' },   // 2
-    { '3' , 'd' , 'e' , 'f' , '\0' },   // 3
-    { '4' , 'g' , 'h' , 'i' , '\0' },   // 4
-    { '5' , 'j' , 'k' , 'l' , '\0' },   // 5
-    { '6' , 'm' , 'n' , 'o' , '\0' },   // 6
-    { '7' , 'p' , 'q' , 'r' , 's'  },   // 7
-    { '8' , 't' , 'u' , 'v' , '\0' },   // 8
-    { '9' , 'w' , 'x' , 'y' , 'z'  }    // 9
+    { ZERO_KEY , '\0', '\0', '\0', '\0' },	// 0
+    { ONE_KEY  , '-' , '\0', '\0', '\0' },	// 1
+    { TWO_KEY  , 'a' , 'b' , 'c' , '\0' },	// 2
+    { THREE_KEY, 'd' , 'e' , 'f' , '\0' },  // 3
+    { FOUR_KEY , 'g' , 'h' , 'i' , '\0' },  // 4
+    { FIVE_KEY , 'j' , 'k' , 'l' , '\0' },  // 5
+    { SIX_KEY  , 'm' , 'n' , 'o' , '\0' },  // 6
+    { SEVEN_KEY, 'p' , 'q' , 'r' , 's'  },  // 7
+    { EIGHT_KEY, 't' , 'u' , 'v' , '\0' },  // 8
+    { NINE_KEY , 'w' , 'x' , 'y' , 'z'  }   // 9
 };
 
 
@@ -147,7 +148,11 @@ void add() {
 	// Resets when new key pressed
 	static int curr_cycle = 0;
 
-	if (input == '#' || input == '*') return;
+	char valid_keys[] = {ONE_KEY, TWO_KEY, THREE_KEY, FOUR_KEY, FIVE_KEY, SIX_KEY, SEVEN_KEY, EIGHT_KEY, NINE_KEY, ZERO_KEY};
+	bool valid = false;
+	for (int i = 0; i < 10; i++)
+		if (input == valid_keys[i]) valid = true;
+	if (!valid) return;
 
 	curr_cycle = input == last_char ? (curr_cycle + 1) % 4 : 0;
 
@@ -159,9 +164,9 @@ void add() {
 
 void handle_shell_input() {
     if (input != '\0' && input != old_input) {
-		if (input == '*' && shell_buffer_pos > MIN_SHELL_BUFFER_POS) del();
+		if (input == BACKSPACE_KEY && shell_buffer_pos > MIN_SHELL_BUFFER_POS) del();
 
-		else if (input == '#') submit();
+		else if (input == ENTER_KEY) submit();
 
 		else {
 			// QOL - advance a space if user changes character
@@ -178,22 +183,31 @@ void handle_shell_input() {
 
 
 // move curr_view_line by a certain amount safely
-void mv_line(const int sign) {
-	if ((curr_view_line + sign) * LINE_WIDTH > cmd_lens[curr_cmd_index]
-			|| (curr_view_line + sign) < 0) return;
+void mv_line(int sign) {
+	while ((curr_view_line + sign) * LINE_WIDTH >= cmd_lens[curr_cmd_index]) sign--;
+	while ((curr_view_line + sign) < 0) sign++;
 	curr_view_line += sign;
 }
 
 void handle_view_input() {
+	if (input == old_input) return;
 	switch (input) {
 		case '\0':
 			break;
-		case '#':
-			if (old_input != input) mv_line(1);
+		case LNUP_KEY:
+			mv_line(-1);
 			break;
-		case '*':
-			if (old_input != input) mv_line(-1);
+		case LNDN_KEY:
+			mv_line(1);
 			break;
+		case PGUP_KEY:
+			mv_line(-8);
+			break;
+		case PGDN_KEY:
+			mv_line(8);
+			break;
+		case ENTER_KEY:
+			break; // Ignore enter key - keypad seems to suffer from debouncing and I cannot be bothered to fix it
 		default: // Any other key will return to the shell
 			curr_mode = SHELL;
 			reset_buffers();
