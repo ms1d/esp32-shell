@@ -230,7 +230,7 @@ void draw_screen_internal(const char *buffer, const int len) {
 	if (buffer == old_buffer && len == old_len) goto after_render;
 
 	u8g2_ClearBuffer(&u8g2);
-	for (int i = 0; i < len; i+= LINE_WIDTH) {
+	for (int i = 0; i <= len; i+= LINE_WIDTH) {
 		char line_buffer[LINE_WIDTH+1];
 		
 		for (int j = 0; j < LINE_WIDTH; j++) {
@@ -242,14 +242,15 @@ void draw_screen_internal(const char *buffer, const int len) {
 				TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT,
 				line_buffer);
 
-		if (curr_mode == SHELL && i < shell_buffer_pos && i + LINE_WIDTH > shell_buffer_pos) {
+		if (curr_mode == SHELL && i <= shell_buffer_pos && i + LINE_WIDTH > shell_buffer_pos) {
 			u8g2_DrawStr(&u8g2,
-				(shell_buffer_pos - i % LINE_WIDTH) * DISPLAY_CHAR_WIDTH + SPACE_WIDTH,
+				(shell_buffer_pos - i) * DISPLAY_CHAR_WIDTH + SPACE_WIDTH,
 				TOP_LINE_Y + i / LINE_WIDTH * LINE_HEIGHT + CURSOR_VERT_OFFSET,
 				CURSOR
 			);
 		}
 	}
+
 	u8g2_SendBuffer(&u8g2);
 
 after_render: old_buffer = buffer; old_len = len;
