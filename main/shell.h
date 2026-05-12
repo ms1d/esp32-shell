@@ -1,6 +1,7 @@
 #include "data.h"
 #include "sh1106_setup.h"
 #include "keypad.h"
+#include "esp_random.h"
 
 
 
@@ -129,16 +130,33 @@ void submit() {
 
 	// Match input to a command
 	for (int i = 0; i < cmd_count; i++) {
-		bool match = curr_mode != VIEW;
+		bool match = true;
 		const int cmd_name_len = cmd_name_lens[i];
 
 		if (cmd_name_len != input_len) continue;
 
-		for (int j = 0; j < cmd_name_lens[i] && input_buffer[j] != '\0'; j++)
+		for (int j = 0; j < cmd_name_lens[i] && input_buffer[j] != '\0' && match; j++)
 			match = match && (cmd_names[i][j] == input_buffer[j]);
 
 		if (match) {
-			curr_mode = VIEW; curr_cmd_index = i; curr_view_line = 0;
+			curr_mode = VIEW; curr_cmd_index = i; curr_view_line = 0; return;
+		}
+	}
+
+	// Try match with help
+	char help[] = "help";
+	bool match = true; for (int i = 0; i < 4; i++) match = match && (help[i] == input_buffer[i]);
+
+	if (match) {
+		change_buffer();
+		int index = esp_random() % cmd_count;
+		auto cmd_name = cmd_names[index];
+		auto len = cmd_name_lens[index];
+		printf("index = %d, cmd_name = %s, len = %d\n", index, cmd_name, len);
+		for (int i = 0; i < len; i++) {
+			curr_shell_buffer[shell_buffer_pos] = cmd_name[i];
+			change_buffer();
+			curr_shell_buffer[shell_buffer_pos++] = cmd_name[i];
 		}
 	}
 }
