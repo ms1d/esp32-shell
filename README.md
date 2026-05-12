@@ -8,6 +8,8 @@ A small mock up shell for the esp32 s3 microcontroller, using esp-idf
 
 - Easy to hard-code commands which simply return a text output
 
+- `help` returns the name of a random command
+
 ## Layout
 
 - Source code under `main/`
@@ -51,6 +53,8 @@ A small mock up shell for the esp32 s3 microcontroller, using esp-idf
 - `cmds[i]` must be longer than the length of the shell PROMPT to overwrite it
 
 - `cmds[i]` must be shorter than BUFFER_SIZE; otherwise it will crash the program
+
+- `help` is reserved by the program and is ignored if you include it
 
 ## Sample `main/data.h`
 
