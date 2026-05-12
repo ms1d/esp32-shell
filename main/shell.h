@@ -212,9 +212,11 @@ void handle_view_input() {
 	switch (input) {
 		case '\0':
 			break;
+		case ENTER_KEY:
 		case LNUP_KEY:
 			mv_line(-1);
 			break;
+		case BACKSPACE_KEY:
 		case LNDN_KEY:
 			mv_line(1);
 			break;
@@ -224,8 +226,6 @@ void handle_view_input() {
 		case PGDN_KEY:
 			mv_line(8);
 			break;
-		case ENTER_KEY:
-			break; // Ignore enter key - keypad seems to suffer from debouncing and I cannot be bothered to fix it
 		default: // Any other key will return to the shell
 			curr_mode = SHELL;
 			reset_buffers();
